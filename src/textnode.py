@@ -1,18 +1,39 @@
 from enum import Enum
+from typing import Callable, List, Tuple
+from typing_extensions import Self
+import re
 
 from leafnode import LeafNode
+from utilities import find_all
 
 class TextType(Enum):
-  TEXT = "text",
-  BOLD = "bold",
-  ITALIC = "italic",
-  CODE = "code",
-  LINK = "link",
+  TEXT = "text"
+  BOLD = "bold"
+  ITALIC = "italic"
+  CODE = "code"
+  LINK = "link"
   IMAGE = "image"
 
+  def get_delimiters(self):
+    match self:
+      case TextType.TEXT:
+        return None
+      case TextType.BOLD:
+        return ("**", "**")
+      case TextType.ITALIC:
+        return ("*", "*")
+      case TextType.CODE:
+        return ("`", "`")
+      case TextType.LINK:
+        return ("[", "](", ")")
+      case TextType.IMAGE:
+        return ("![", "](", ")")
+      case _:
+        raise ValueError("Unknown Enum value")
+
   def __str__(self) -> str:
-    return str(self.value[0])
-  
+    return str(self.value)
+   
 class TextNode:
   
   def __init__(self, text: str, text_type: TextType, url: str | None = None) -> None:
@@ -47,3 +68,131 @@ class TextNode:
         return LeafNode("", "img", { "src": self.url, "alt": self.text })
       case _:
         raise Exception("unknown text type")
+      
+  def split_nodes_delimiter(old_nodes: List[Self], text_type: TextType) -> List[Self]:
+    new_nodes: List[Self] = []
+    delimiter: Tuple = text_type.get_delimiters()
+
+    for node in old_nodes:
+      if (node.text_type != TextType.TEXT or 
+          text_type == TextType.LINK or 
+          text_type == TextType.IMAGE or 
+          delimiter == None):
+        new_nodes.append(node)
+      else:
+        indices = find_all(node.text, delimiter[0])
+     
+        current_index = 0
+        is_normal = True
+        text_segment = ""
+
+        for index in indices:
+          text_segment = node.text[current_index: index]
+
+          if (len(text_segment) != 0) and (len(text_segment.strip()) > 0):             
+            if is_normal:
+              new_nodes.append(TextNode(text_segment, TextType.TEXT)) 
+            else:
+              new_nodes.append(TextNode(text_segment, text_type))
+
+          is_normal = not is_normal
+          current_index = index + len(delimiter[0])
+
+        if(current_index < len(node.text)):
+          text_segment = node.text[current_index:]
+
+          if (len(text_segment) != 0) and (len(text_segment.strip()) > 0):             
+            new_nodes.append(TextNode(text_segment, TextType.TEXT))
+
+    return new_nodes               
+
+  def extract_markdown_images(text: str) -> List[Tuple[str, str]]:
+    pattern = r"!\[(.*?)\]\((([^()]|\([^()]*\))*)\)"
+
+    all_matches = re.finditer(pattern, text)
+    images = []
+
+    for match in all_matches:
+      alt_text = match.group(1)
+      url = match.group(2)
+
+      images.append((alt_text, url))
+    
+    return images
+
+  def extract_markdown_links(text: str) -> List[Tuple[str, str]]:
+    pattern = r"(?<!!)\[(.*?)\]\((([^()]|\([^()]*\))*)\)"
+
+    all_matches = re.finditer(pattern, text)
+    links = []
+
+    for match in all_matches:
+      anchor_text = match.group(1)
+      url = match.group(2)
+
+      links.append((anchor_text, url))
+
+    return links
+  
+  def _get_pattern_format(target: Tuple[str, str], text_type: TextType) -> str:
+    match text_type:
+      case TextType.LINK:
+        return f"[{target[0]}]({target[1]})"
+      case TextType.IMAGE:
+        return f"![{target[0]}]({target[1]})"
+      case _:
+        raise NotImplementedError()
+          
+  def _split_nodes_helper(
+      old_nodes: List[Self],
+      text_type: TextType,
+      extraction_method: Callable,
+      pattern_format: Callable[[str, str], str] = _get_pattern_format
+  ) -> List[Self]:
+    new_nodes: List[Self] = []
+
+    for old_node in old_nodes:
+      targets_in_node = extraction_method(old_node.text)
+
+      if (len(targets_in_node) == 0):
+        new_nodes.append(old_node)
+      else:
+        current_text = old_node.text
+        for target in targets_in_node:
+          tokens = current_text.split(pattern_format(target, text_type), 1)
+
+          if (len(tokens[0].strip()) > 0):
+            new_nodes.append(TextNode(tokens[0], TextType.TEXT))
+
+          new_nodes.append(TextNode(target[0], text_type, target[1]))
+          current_text = tokens[1] 
+
+        if (len(current_text.strip()) != 0):
+          new_nodes.append(TextNode(current_text, TextType.TEXT))
+
+    return new_nodes
+
+  def split_nodes_image(old_nodes: List[Self]) -> List[Self]:
+    return TextNode._split_nodes_helper(old_nodes, 
+                                        TextType.IMAGE, 
+                                        TextNode.extract_markdown_images
+                                        )
+
+  def split_nodes_link(old_nodes: List[Self]) -> List[Self]:
+    return TextNode._split_nodes_helper(old_nodes, 
+                                        TextType.LINK, 
+                                        TextNode.extract_markdown_links
+                                        )
+    
+  def text_to_textnodes(text: str) -> List[Self]:
+    original_node = TextNode(text, TextType.TEXT)
+
+    nodes_after_images_extraction = TextNode.split_nodes_image([original_node])
+    nodes_after_links_extraction  = TextNode.split_nodes_link(nodes_after_images_extraction)
+    nodes_after_bolds_extraction  = TextNode.split_nodes_delimiter(nodes_after_links_extraction,
+                                                                   TextType.BOLD)
+    nodes_after_italic_extraction = TextNode.split_nodes_delimiter(nodes_after_bolds_extraction,
+                                                                   TextType.ITALIC)
+    nodes_after_code_extraction = TextNode.split_nodes_delimiter(nodes_after_italic_extraction,
+                                                                 TextType.CODE)
+    return nodes_after_code_extraction
