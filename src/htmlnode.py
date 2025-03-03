@@ -1,8 +1,11 @@
+from abc import ABC, abstractmethod
 from typing import Dict, List
 from typing_extensions import Self
 
 
-class HTMLNode:
+class HTMLNode(ABC):
+
+  @abstractmethod
   def __init__(self, 
                tag: str = None, 
                value: str = None, 
@@ -13,8 +16,9 @@ class HTMLNode:
     self.children = children
     self.props = props
 
+  @abstractmethod
   def to_html(self: Self) -> str:
-    raise NotImplementedError()  
+    pass  
 
   def props_to_html(self: Self) -> str:
     if(not self.props):
@@ -24,3 +28,12 @@ class HTMLNode:
   
   def __repr__(self: Self) -> str:
     return f"HTMLNode({self.tag}, {self.value}, {self.children}, {self.props})"
+  
+  def __eq__(self: Self, other: object) -> bool:
+    if (not isinstance(other, HTMLNode)):
+      return False
+    
+    return ((self.tag == other.tag) and
+            (self.value == other.value) and
+            (self.children == other.children) and
+            (self.props == other.props))

@@ -1,6 +1,7 @@
 import unittest
 
 from leafnode import LeafNode
+from parentnode import ParentNode
 from textnode import TextNode, TextType
 
 
@@ -67,7 +68,7 @@ class TextNodeTest(unittest.TestCase):
   def test_to_leafnode_BOLD(self):
     this_node = TextNode("This is a bold text node", TextType.BOLD)
 
-    expected = LeafNode("This is a bold text node", "b")
+    expected = ParentNode("b", [ LeafNode("This is a bold text node") ])
     actual = this_node.to_leafnode()
 
     self.assertEqual(expected, actual)
@@ -75,7 +76,7 @@ class TextNodeTest(unittest.TestCase):
   def test_to_leafnode_ITALIC(self):
     this_node = TextNode("This is a italic text node", TextType.ITALIC)
 
-    expected = LeafNode("This is a italic text node", "i")
+    expected = ParentNode("i", [ LeafNode("This is a italic text node") ])
     actual = this_node.to_leafnode()
 
     self.assertEqual(expected, actual)
@@ -83,7 +84,7 @@ class TextNodeTest(unittest.TestCase):
   def test_to_leafnode_CODE(self):
     this_node = TextNode("This is a code block", TextType.CODE)
 
-    expected = LeafNode("This is a code block", "code")
+    expected = ParentNode("code", [ LeafNode("This is a code block") ])
     actual = this_node.to_leafnode()
 
     self.assertEqual(expected, actual)
@@ -91,7 +92,7 @@ class TextNodeTest(unittest.TestCase):
   def test_to_leafnode_LINK(self):
     this_node = TextNode("This is a Hyperlink", TextType.LINK, "https://www.gmail.com")
 
-    expected = LeafNode("This is a Hyperlink", "a", { "href": "https://www.gmail.com"})
+    expected = ParentNode("a", [ LeafNode("This is a Hyperlink") ], { "href": "https://www.gmail.com"})
     actual = this_node.to_leafnode()
 
     self.assertEqual(expected, actual)
@@ -559,6 +560,7 @@ class TextNodeTest(unittest.TestCase):
     text = "This is **text** with an *italic* word and a `code block and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
 
     self.assertRaises(Exception, TextNode.text_to_textnodes(text))
+
 
 if __name__ == "__main__":
   unittest.main()

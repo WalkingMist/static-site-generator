@@ -1,5 +1,6 @@
 from typing import Dict, List
 from htmlnode import HTMLNode
+from leafnode import LeafNode
 
 
 class ParentNode(HTMLNode):
@@ -11,13 +12,17 @@ class ParentNode(HTMLNode):
 
   def append_child(self, child: HTMLNode) -> None:
     self.children.append(child)
-    
+
+  def __repr__(self) -> str:
+    return f"ParentNode({self.tag}, {self.children}, {self.props})"
+   
   def to_html(self) -> str:
+
     if(self.tag == None):
       raise ValueError("all parent nodes must have a tag")
     
     if(self.children == None):
-      raise ValueError("a parent node must have at lease 1 child")
+      raise ValueError(f"a parent node must have at lease 1 child, current node: {self}")
     
     children_html = "" 
     for child in self.children:

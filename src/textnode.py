@@ -3,8 +3,10 @@ from typing import Callable, List, Tuple
 from typing_extensions import Self
 import re
 
+from htmlnode import HTMLNode
 from leafnode import LeafNode
-from utilities import find_all
+from parentnode import ParentNode
+from utilities import find_all, isEmptyOrWhitespaces
 
 class TextType(Enum):
   TEXT = "text"
@@ -57,13 +59,13 @@ class TextNode:
       case TextType.TEXT:
         return LeafNode(self.text)
       case TextType.BOLD:
-        return LeafNode(self.text, "b")
+        return ParentNode("b", [ LeafNode(self.text) ])
       case TextType.ITALIC:
-        return LeafNode(self.text, "i")
+        return ParentNode("i", [ LeafNode(self.text) ])
       case TextType.CODE:
-        return LeafNode(self.text, "code")
+        return ParentNode("code", [ LeafNode(self.text) ])
       case TextType.LINK:
-        return LeafNode(self.text, "a", { "href": self.url })
+        return ParentNode("a", [ LeafNode(self.text) ], { "href": self.url })
       case TextType.IMAGE:
         return LeafNode("", "img", { "src": self.url, "alt": self.text })
       case _:
@@ -196,3 +198,4 @@ class TextNode:
     nodes_after_code_extraction = TextNode.split_nodes_delimiter(nodes_after_italic_extraction,
                                                                  TextType.CODE)
     return nodes_after_code_extraction
+  
