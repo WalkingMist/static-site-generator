@@ -27,7 +27,7 @@ def generate_page(from_path: str , template_path: str, dest_path: str, basepath:
     page_title = MarkdownParser.extract_title(markdown)
     html_content = MarkdownParser.markdown_to_html_node(markdown).to_html()
     output_page = template.replace("{{ Title }}", page_title).replace("{{ Content }}", html_content)
-    output_page = output_page.replace('href=/"', f'href="{basepath}').replace('src="/', f'src="{basepath}')
+    output_page = output_page.replace('href="/', f'href="{basepath}').replace('src="/', f'src="{basepath}')
 
     output_file_path = os.path.join(dest_path, 
                                     os.path.dirname(page).replace(from_path, "").lstrip("/"),
@@ -67,7 +67,7 @@ def clear_output_directory(output_path:str) -> None:
     os.makedirs(target_path)
 
 def main() -> None:
-  basepath: str = sys.argv[0] if sys.argv[0] else "/"
+  basepath: str = sys.argv[1] if sys.argv[1] else "/"
 
   static_directory: str  = "./static"
   output_directory: str = "./docs"
