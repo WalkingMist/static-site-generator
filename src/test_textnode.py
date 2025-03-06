@@ -122,7 +122,7 @@ class TextNodeTest(unittest.TestCase):
     self.assertEqual(expected, actual)
 
   def test_split_nodes_delimiter_ITALIC(self):
-    this_node = TextNode("This is text with *ITALIC* word", TextType.TEXT)
+    this_node = TextNode("This is text with _ITALIC_ word", TextType.TEXT)
 
     expected = [TextNode("This is text with ", TextType.TEXT), TextNode("ITALIC", TextType.ITALIC), TextNode(" word", TextType.TEXT)]
     actual = TextNode.split_nodes_delimiter([this_node], TextType.ITALIC)
@@ -154,9 +154,9 @@ class TextNodeTest(unittest.TestCase):
     self.assertEqual(expected, actual)
    
   def test_split_nodes_delimiter_not_found(self):
-    this_node = TextNode("This is text with *ITALIC* word", TextType.TEXT)
+    this_node = TextNode("This is text with _ITALIC_ word", TextType.TEXT)
 
-    expected = [TextNode("This is text with *ITALIC* word", TextType.TEXT)]
+    expected = [TextNode("This is text with _ITALIC_ word", TextType.TEXT)]
     actual = TextNode.split_nodes_delimiter([this_node], TextType.BOLD)
 
     self.assertEqual(expected, actual)
@@ -170,9 +170,10 @@ class TextNodeTest(unittest.TestCase):
     self.assertEqual(expected, actual)
 
   def test_split_nodes_delimiter_not_closing(self):
-    this_node = TextNode("This is text with *ITALIC word", TextType.TEXT)
+    this_node = TextNode("This is text with _ITALIC word", TextType.TEXT)
 
-    self.assertRaises(Exception, TextNode.split_nodes_delimiter([this_node], TextType.ITALIC))
+    with self.assertRaises(Exception):
+      TextNode.split_nodes_delimiter([this_node], TextType.ITALIC)
 
   def test_split_nodes_delimiter_empty_segment(self):
     this_node = TextNode("This is text with **BOLD WORDS** ", TextType.TEXT)
@@ -503,7 +504,7 @@ class TextNodeTest(unittest.TestCase):
     self.assertEqual(expected, actual)
 
   def test_text_to_textnodes(self):
-    text = "This is **text** with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+    text = "This is **text** with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
 
     expected = [
       TextNode("This is ", TextType.TEXT),
@@ -530,11 +531,11 @@ class TextNodeTest(unittest.TestCase):
     self.assertEqual(expected, actual)
 
   def test_text_to_textnodes_nested_markup_not_supported(self):
-    text = "This is **bolded text with an *italic* word nested inside** and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+    text = "This is **bolded text with an _italic_ word nested inside** and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
 
     expected = [
       TextNode("This is ", TextType.TEXT),
-      TextNode("bolded text with an *italic* word nested inside", TextType.BOLD),
+      TextNode("bolded text with an _italic_ word nested inside", TextType.BOLD),
       TextNode(" and a ", TextType.TEXT),
       TextNode("code block", TextType.CODE),
       TextNode(" and an ", TextType.TEXT),
@@ -547,19 +548,22 @@ class TextNodeTest(unittest.TestCase):
     self.assertEqual(expected, actual)
 
   def test_text_to_textnodes_malformed_delimiters_BOLD(self):
-    text = "This is **text with an *italic* word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+    text = "This is **text with an _italic_ word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
 
-    self.assertRaises(Exception, TextNode.text_to_textnodes(text))
+    with self.assertRaises(Exception):
+      TextNode.text_to_textnodes(text)
 
   def test_text_to_textnodes_malformed_delimiters_ITALIC(self):
-    text = "This is **text** with an *italic word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+    text = "This is **text** with an _italic word and a `code block` and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
 
-    self.assertRaises(Exception, TextNode.text_to_textnodes(text))
+    with self.assertRaises(Exception):
+      TextNode.text_to_textnodes(text)
 
   def test_text_to_textnodes_malformed_delimiters_CODE(self):
-    text = "This is **text** with an *italic* word and a `code block and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
+    text = "This is **text** with an _italic_ word and a `code block and an ![obi wan image](https://i.imgur.com/fJRm4Vk.jpeg) and a [link](https://boot.dev)"
 
-    self.assertRaises(Exception, TextNode.text_to_textnodes(text))
+    with self.assertRaises(Exception):
+      TextNode.text_to_textnodes(text)
 
 
 if __name__ == "__main__":

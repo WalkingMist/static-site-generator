@@ -23,7 +23,7 @@ class TextType(Enum):
       case TextType.BOLD:
         return ("**", "**")
       case TextType.ITALIC:
-        return ("*", "*")
+        return ("_", "_")
       case TextType.CODE:
         return ("`", "`")
       case TextType.LINK:
@@ -83,9 +83,10 @@ class TextNode:
         new_nodes.append(node)
       else:
         indices = find_all(node.text, delimiter[0])
-     
+
         current_index = 0
         is_normal = True
+        open_marker_found = False
         text_segment = ""
 
         for index in indices:
@@ -96,10 +97,18 @@ class TextNode:
               new_nodes.append(TextNode(text_segment, TextType.TEXT)) 
             else:
               new_nodes.append(TextNode(text_segment, text_type))
+              open_marker_found = False
 
           is_normal = not is_normal
           current_index = index + len(delimiter[0])
+          
+          if (current_index < len(node.text) and
+             (text_type == TextType.BOLD or text_type == TextType.CODE or text_type == TextType.ITALIC)):
+            open_marker_found = True
 
+        if open_marker_found and not is_normal:
+          raise Exception(f"Malformed {text_type} segment.")
+ 
         if(current_index < len(node.text)):
           text_segment = node.text[current_index:]
 

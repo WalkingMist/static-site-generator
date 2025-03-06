@@ -1,7 +1,7 @@
 import re
 
 from enum import Enum
-from typing import Dict, List
+from typing import List
 from htmlnode import HTMLNode
 from leafnode import LeafNode
 from parentnode import ParentNode
@@ -24,7 +24,6 @@ class BlockType(Enum):
 
 
 class MarkdownParser:
-  
   def is_quote_block(current_block:List[str]) -> bool:
     quote_found = False
     if current_block:
@@ -47,7 +46,6 @@ class MarkdownParser:
     return heading_found
   
   def is_list_block(current_block: List[str]) -> bool:
-
     list_started = False
     if current_block:
       list_started = all(line.startswith("*") or line.startswith("-") or line[:1].isdigit() for line in current_block)
@@ -242,7 +240,6 @@ class MarkdownParser:
           html_nodes.append(quotes[0])
 
         case BlockType.UNORDERED_LIST:
-        
           li_nodes = [
             ParentNode('li',
                        MarkdownParser.text_to_children(line.strip().lstrip("*-").strip()))
@@ -255,4 +252,14 @@ class MarkdownParser:
           
     return ParentNode("div", html_nodes)
 
+  def extract_title(markdown: str) -> str:
+    lines = markdown.splitlines()
+    h1_markdown_patter: str = r"^#(?!#)\s?"
 
+    for line in lines:
+      matches = re.match(h1_markdown_patter, line)
+      
+      if matches:
+        return line[len(matches[0]):].strip()
+      
+    raise Exception("Header markup not found.")

@@ -23,8 +23,8 @@ class LeafNodeTest(unittest.TestCase):
                           "href": "https://www.gmail.com",
                           "target": "_self"
                         })
-    
-    self.assertRaises(ValueError, this_node.to_html)
+    with self.assertRaises(ValueError):
+      this_node.to_html()
 
   def test_to_html_no_tag(self):
     this_node = LeafNode("GMail",

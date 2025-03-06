@@ -14,15 +14,16 @@ class ParentNodeTest(unittest.TestCase):
                                         "href": "https://www.gmail.com"
                                       })],
                            props=None)
-
-    self.assertRaises(ValueError, this_node.to_html)
+    with self.assertRaises(ValueError):
+      this_node.to_html()
 
   def test_to_html_no_children(self):
     this_node = ParentNode(None,
                            children = None,
                            props=None)
     
-    self.assertRaises(ValueError, this_node.to_html)
+    with self.assertRaises(ValueError):
+      this_node.to_html()
 
   def test_to_html(self):
     this_node = ParentNode("p",

@@ -544,6 +544,52 @@ def find_all(self: str, pattern: str) -> Iterator[Tuple[int, str]]:
     actual = MarkdownParser.markdown_to_html_node(markdown)
     self.assertEqual(expected, actual)
 
+  def test_extract_title_header_found(self):
+    markdown = '''
+# This is the title
 
+This is the 1st paragraph'''
+
+    expected = "This is the title"
+    actual = MarkdownParser.extract_title(markdown)
+
+    self.assertEqual(expected, actual)
+
+  def test_extract_title_header_not_found(self):
+    markdown = '''
+This is NOT the title
+
+This is the 1st paragraph'''
+    
+    with self.assertRaises(Exception):
+      MarkdownParser.extract_title(markdown)
+
+  def test_extract_title_header_only_h2_with_space(self):
+    markdown = '''
+## This is NOT the top-level title
+
+This is the 1st paragraph'''
+    
+    with self.assertRaises(Exception):
+      MarkdownParser.extract_title(markdown)
+
+  def test_extract_title_header_no_space_after_marker(self):
+    markdown = '''
+#This is the title
+
+This is the 1st paragraph'''
+    expected = "This is the title"
+    actual = MarkdownParser.extract_title(markdown)
+
+    self.assertEqual(expected, actual)
+  
+  def test_extract_title_header_marker_not_at_start(self):
+    markdown = '''
+This #is the title
+
+This is the 1st paragraph'''
+    with self.assertRaises(Exception):
+      MarkdownParser.extract_title(markdown)
+      
 if __name__ == "__main__":
   unittest.main()
