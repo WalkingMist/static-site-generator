@@ -1,11 +1,13 @@
 import os
 import shutil
+import sys
 from typing import List
 
 from markdown_parser import MarkdownParser
 from parentnode import ParentNode
 
-def generate_page(from_path:str , template_path:str, dest_path:str) -> None:
+def generate_page(from_path: str , template_path: str, dest_path: str, basepath: str) -> None:
+  print(f"Generating pages from {from_path} to {dest_path} using {template_path}")
 
   template_file = open(template_path, "r")
   template = template_file.read()
@@ -25,7 +27,8 @@ def generate_page(from_path:str , template_path:str, dest_path:str) -> None:
     page_title = MarkdownParser.extract_title(markdown)
     html_content = MarkdownParser.markdown_to_html_node(markdown).to_html()
     output_page = template.replace("{{ Title }}", page_title).replace("{{ Content }}", html_content)
-    
+    output_page = output_page.replace('href=/"', f'href="{basepath}').replace('src="/', f'src="{basepath}')
+
     output_file_path = os.path.join(dest_path, 
                                     os.path.dirname(page).replace(from_path, "").lstrip("/"),
                                     f"{os.path.splitext(os.path.basename(page))[0]}.html")
@@ -58,17 +61,21 @@ def copy_static(static_path:str, output_path:str) -> None:
 
 def clear_output_directory(output_path:str) -> None:
   target_path = os.path.join(os.getcwd(), output_path)
-  shutil.rmtree(target_path, ignore_errors = False)
-  os.makedirs(target_path)
+
+  if os.path.exists(output_path):
+    shutil.rmtree(target_path, ignore_errors = False)
+    os.makedirs(target_path)
 
 def main() -> None:
-  static_directory:str  = "./static"
-  output_directory:str = "./public"
-  content_directory:str  = "./content"
-  template_path:str = "./template.html"
+  basepath: str = sys.argv[0] if sys.argv[0] else "/"
+
+  static_directory: str  = "./static"
+  output_directory: str = "./docs"
+  content_directory: str  = "./content"
+  template_path: str = "./template.html"
 
   clear_output_directory(output_directory)
   copy_static(static_directory, output_directory)
-  generate_page(content_directory, template_path, output_directory)
+  generate_page(content_directory, template_path, output_directory, basepath)
 
 main()
